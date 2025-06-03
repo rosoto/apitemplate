@@ -1,7 +1,5 @@
 ﻿using Arquetipo.Api.Infrastructure.Persistence;
 using Arquetipo.Api.Models.Request;
-using Arquetipo.Api.Models.Request.v1;
-using Arquetipo.Api.Models.Request.v2;
 using Arquetipo.Api.Models.Response; // O la entidad si es diferente
 using Microsoft.EntityFrameworkCore;
 
@@ -22,11 +20,12 @@ public class ClienteRepository : IClienteRepository
     {
         _logger.LogInformation("Obteniendo clientes paginados desde EF Core. Página: {Page}, Tamaño: {PageSize}", page, pageSize);
 
+        // Validación básica para evitar valores negativos o cero
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
 
         return await _context.Clientes
-            .OrderBy(c => c.Id) 
+            .OrderBy(c => c.Id) // Ordena por Id para paginación consistente
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -39,20 +38,10 @@ public class ClienteRepository : IClienteRepository
         return await _context.Clientes.FindAsync(id);
     }
 
-    public async Task<List<Cliente>> GetByAnyAsync(SetClienteAny clienteParams) // La firma ahora coincide con la interfaz corregida
+    public async Task<List<Cliente>> GetByAnyAsync(SetClienteAny clienteParams)
     {
         _logger.LogInformation("Buscando clientes desde EF Core con parámetros: {@ClienteParams}", clienteParams);
-
-        var query = _context.Clientes.AsQueryable(); // Empezar con una consulta base
-
-        if (clienteParams == null)
-        {
-            // Si no hay parámetros, ¿devolver todos paginados o una lista vacía?
-            // Por ahora, si clienteParams es null, no aplicará filtros y devolverá los primeros 10.
-            // Podrías querer cambiar este comportamiento.
-            _logger.LogWarning("GetByAnyAsync fue llamado con clienteParams nulo. Se devolverán los primeros 10 clientes si existen.");
-            return await query.Take(10).ToListAsync(); // O manejar de otra forma
-        }
+        var query = _context.Clientes.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(clienteParams.Nombre))
         {
@@ -70,16 +59,8 @@ public class ClienteRepository : IClienteRepository
         {
             query = query.Where(c => c.Telefono.Contains(clienteParams.Telefono));
         }
-        // Si SetClienteAny tuviera un campo Nickname y quisieras usarlo:
-        // if (!string.IsNullOrWhiteSpace(clienteParams.Nickname))
-        // {
-        //     query = query.Where(c => c.AlgunCampoNickname.Contains(clienteParams.Nickname));
-        // }
 
-
-        // Limitar los resultados para evitar traer demasiados datos si la consulta es muy abierta
-        // El estándar original mencionaba un límite de 10.
-        return await query.Take(10).ToListAsync();
+        return await query.Take(10).ToListAsync(); // Manteniendo la lógica del TOP 10
     }
 
     public async Task<bool> ExistsAsync(int? id)
@@ -114,7 +95,7 @@ public class ClienteRepository : IClienteRepository
         _logger.LogInformation("{Count} clientes agregados a través de EF Core.", clientesEntities.Count);
     }
 
-    public async Task UpdateAsync(ActualizarClienteRequest clienteDto)
+    public async Task UpdateAsync(SetClienteId clienteDto)
     {
         if (clienteDto?.Id == null)
         {
@@ -162,45 +143,5 @@ public class ClienteRepository : IClienteRepository
         _context.Clientes.Remove(clienteEntity);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Cliente con ID {Id} eliminado a través de EF Core.", id);
-    }
-
-    public async Task UpdateAsync(SetClienteId clienteDto) // Implementación de la interfaz
-    {
-        if (clienteDto?.Id == null)
-        {
-            _logger.LogWarning("Intento de actualizar un cliente con DTO nulo o ID nulo.");
-            return;
-        }
-
-        var clienteEntity = await _context.Clientes.FindAsync(clienteDto.Id);
-
-        if (clienteEntity == null)
-        {
-            _logger.LogWarning("No se encontró el cliente con ID {Id} para actualizar.", clienteDto.Id);
-            return;
-        }
-
-        clienteEntity.Nombre = clienteDto.Nombre;
-        clienteEntity.Apellido = clienteDto.Apellido;
-        clienteEntity.Email = clienteDto.Email;
-        clienteEntity.Telefono = clienteDto.Telefono;
-
-        _context.Entry(clienteEntity).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("Cliente con ID {Id} actualizado exitosamente a través de EF Core.", clienteDto.Id);
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            _logger.LogError(ex, "Error de concurrencia al actualizar el cliente con ID {Id}. El cliente pudo haber sido modificado o eliminado por otro usuario.", clienteDto.Id);
-            throw;
-        }
-        catch (DbUpdateException ex)
-        {
-            _logger.LogError(ex, "Error al guardar los cambios en la base de datos para el cliente con ID {Id}.", clienteDto.Id);
-            throw;
-        }
     }
 }

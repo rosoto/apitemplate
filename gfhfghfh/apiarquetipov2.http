@@ -1,0 +1,6 @@
+@apiarquetipov2_HostAddress = http://localhost:5193
+
+GET {{apiarquetipov2_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

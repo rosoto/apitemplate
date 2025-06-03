@@ -1,7 +1,7 @@
 ﻿using Arquetipo.Api.Handlers;
 using Arquetipo.Api.Infrastructure;
 using Arquetipo.Api.Infrastructure.Persistence;
-using Arquetipo.Api.Configuration;
+using Arquetipo.Api.Controllers;
 using Arquetipo.Api.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -90,29 +90,50 @@ builder.Services.AddAuthentication(options =>
         OnTokenValidated = async context =>
         {
             var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUsuarioRepository>();
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>(); // Para logging
 
-            var userNameClaim = context.Principal.FindFirst(JwtRegisteredClaimNames.Sub);
+            // Obtener el identificador del usuario desde los claims del token
+            // Puede ser ClaimTypes.NameIdentifier (si lo añadiste al token) o JwtRegisteredClaimNames.Sub (username)
+            var userIdentifierClaim = context.Principal.FindFirst(ClaimTypes.NameIdentifier) ?? context.Principal.FindFirst(JwtRegisteredClaimNames.Sub);
 
-            if (userNameClaim == null || string.IsNullOrEmpty(userNameClaim.Value))
+            if (userIdentifierClaim == null || string.IsNullOrEmpty(userIdentifierClaim.Value))
             {
-                logger.LogWarning("Token validado pero no contiene el claim 'sub' (NombreUsuario).");
+                logger.LogWarning("Token validado pero no contiene un identificador de usuario (sub o nameidentifier).");
                 context.Fail("Token inválido: Falta identificador de usuario.");
                 return;
             }
 
-            var nombreUsuario = userNameClaim.Value;
-            Usuario usuario = await userRepository.GetUsuarioPorNombreAsync(nombreUsuario);
+            var userIdentifier = userIdentifierClaim.Value;
+            Usuario usuario = null;
+
+            // Decide si identificas por ID o por NombreUsuario
+            if (int.TryParse(userIdentifier, out int userId)) // Si el identificador es el ID numérico
+            {
+                // Necesitarías un método GetUsuarioPorIdAsync en tu IUsuarioRepository
+                // usuario = await userRepository.GetUsuarioPorIdAsync(userId); 
+                // Por ahora, asumimos que el identificador es NombreUsuario si no es un ID numérico
+                // O si siempre usas NombreUsuario como 'sub', entonces:
+                usuario = await userRepository.GetUsuarioPorNombreAsync(userIdentifier);
+            }
+            else // Si el identificador es el NombreUsuario (del claim 'sub')
+            {
+                usuario = await userRepository.GetUsuarioPorNombreAsync(userIdentifier);
+            }
+
 
             if (usuario == null || !usuario.EstaActivo)
             {
-                logger.LogWarning("Autenticación fallida para el usuario (desde token): {UserIdentifier}. Usuario no encontrado o inactivo.", nombreUsuario);
-                context.Fail("Usuario no autorizado o inactivo.");
+                logger.LogWarning("Autenticación fallida para el usuario (desde token): {UserIdentifier}. Usuario no encontrado o inactivo en la base de datos.", userIdentifier);
+                context.Fail("Usuario no autorizado o inactivo."); // Esto resultará en un 401
             }
             else
             {
-                logger.LogInformation("Token validado exitosamente contra la base de datos para el usuario: {UserIdentifier}", nombreUsuario);
-                // Opcional: Refrescar claims si es necesario.
+                logger.LogInformation("Token validado exitosamente contra la base de datos para el usuario: {UserIdentifier}", userIdentifier);
+                // Opcional: Podrías refrescar claims aquí si fuera necesario, aunque es más complejo.
+                // Por ejemplo, si los roles del usuario cambian frecuentemente y quieres que el ClaimsPrincipal actual
+                // refleje los roles más recientes de la base de datos en lugar de solo los del token original.
+                // var claimsIdentity = context.Principal.Identity as ClaimsIdentity;
+                // // Remover claims de rol antiguos y añadir los nuevos desde usuario.Roles
             }
         }
     };
@@ -125,16 +146,18 @@ builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwa
 
 var app = builder.Build();
 
-app.UseRequestId(); // Middleware para generar y propagar X-Request-ID
-app.UseCustomSecurityHeaders(); // Middleware personalizado para cabeceras de seguridad
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); // Middleware para manejo de excepciones globales
+app.UseRequestId();
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+app.UseMiddleware<RequestIdMiddleware>();
 
 app.UseSwagger();
 var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-List<string> versionStrings = [.. apiVersionDescriptionProvider.ApiVersionDescriptions
+List<string> versionStrings = apiVersionDescriptionProvider.ApiVersionDescriptions
     .Select(description => description.ApiVersion.ToString())
     .Distinct()
-    .OrderBy(version => version)];
+    .OrderBy(version => version) 
+    .ToList();
 
 app.MapScalarApiReference(options =>
 {

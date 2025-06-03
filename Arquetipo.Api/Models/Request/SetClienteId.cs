@@ -1,38 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations; //
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Arquetipo.Api.Models.Request; //
-
-public class SetClienteId
+namespace Arquetipo.Api.Models.Request
 {
-    /// <summary>
-    /// Id de Cliente.
-    /// </summary>
-    /// <example>8</example>
-    [Required] //
-    public int? Id { get; set; } //
-    /// <summary>
-    /// Nombre Cliente.
-    /// </summary>
-    /// <example>Mauricio</example>
-    [Required] //
-    public required string Nombre { get; set; } //
-    /// <summary>
-    /// Apellido Cliente.
-    /// </summary>
-    /// <example>Perez Tapia</example>
-    [Required] //
-    public required string Apellido { get; set; } //
-    /// <summary>
-    /// Mail
-    /// </summary>
-    /// <example>m.tapia@mail.cl</example>
-    [Required] //
-    [EmailAddress(ErrorMessage = "El campo Email no contiene un formato válido.")] //
-    public required string Email { get; set; } //
-    /// <summary>
-    /// Telefono
-    /// </summary>
-    /// <example>975648375</example>
-    [Required] //
-    public required string Telefono { get; set; } //
+    public class SetClienteId
+    {
+        public int? Id { get; set; }
+        public required string Nombre { get; set; }
+        public required string Apellido { get; set; }
+        [Required]
+        [EmailAddress(ErrorMessage = "El campo Email no contiene un formato válido.")]
+        public required string Email { get; set; }
+
+        public required string Telefono{ get; set; }
+
+    }
 }

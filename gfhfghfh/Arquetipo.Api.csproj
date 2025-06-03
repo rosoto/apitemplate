@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\v2\ClienteController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.16" />
@@ -28,6 +32,11 @@
     <PackageReference Include="NLog.Web.AspNetCore" Version="5.5.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.4.4" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\v2\" />
+    <Folder Include="Handlers\Mapper\" />
   </ItemGroup>
 
 </Project>

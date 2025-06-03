@@ -18,7 +18,7 @@ namespace Arquetipo.Api.Services
             _httpClient = httpClient;
             _logger = logger;
             _usuario = configuration["ApiOperaciones:Usuario"];
-            _password = configuration["ApiOperaciones:Password"];
+            _password = configuration["Apioperaciones:Password"];
         }
 
         private void AddAuthorizationHeader(HttpRequestMessage request)

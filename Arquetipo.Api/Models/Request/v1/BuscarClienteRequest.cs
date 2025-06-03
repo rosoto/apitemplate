@@ -1,6 +1,6 @@
-﻿namespace Arquetipo.Api.Models.Request
+﻿namespace Arquetipo.Api.Models.Request.v1
 {
-    public class SetClienteAny
+    public class BuscarClienteRequest
     {
         public string? Nombre { get; set; }
         public string? Apellido { get; set; }

@@ -1,16 +1,27 @@
-﻿using Arquetipo.Api.Models.Request; //
-using Arquetipo.Api.Models.Response; //
+﻿using Arquetipo.Api.Models.Request.v1;
+using Arquetipo.Api.Models.Request.v2;
+using Arquetipo.Api.Models.Response.v1;
+using Arquetipo.Api.Models.Response.v2;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Arquetipo.Api.Handlers; //
+namespace Arquetipo.Api.Handlers; 
 
 public interface IClienteHandler
 {
-    Task<DataCliente> GetClientes(int page, int pageSize); //
-    Task<DataCliente> GetClienteId(int? Id); //
-    Task<DataCliente> GetClientesAny(SetClienteAny cliente); //
-    Task PostClientes(List<SetCliente> clientes); //
-    Task<bool> UpdateCliente(SetClienteId cliente); //
-    Task<bool> DeleteCliente(int? IdCliente); //
+    //V1
+    Task<DataClienteResponse> GetClientesV1Async(int page, int pageSize);
+    Task<DataClienteResponse> GetClienteByIdV1Async(int? id);
+    Task<DataClienteResponse> GetClientesByAnyV1Async(BuscarClienteRequest query);
+    Task PostClientesV1Async(List<CrearClienteRequestV1> clientes);
+    Task<bool> UpdateClienteV1Async(ActualizarClienteRequest cliente);
+    Task<bool> DeleteClienteV1Async(int? idCliente);
+
+    //V2
+    Task<DataClienteResponseV2> GetClientesV2Async(int page, int pageSize, bool? soloActivos);
+    Task<DataClienteResponseV2> GetClienteByIdV2Async(int? id);
+    Task<DataClienteResponseV2> GetClientesByAnyV2Async(BuscarClienteRequestV2 query);
+    Task PostClientesV2Async(List<CrearClienteRequestV2> clientes);
+    Task<bool> UpdateClienteV2Async(ActualizarClienteRequestV2 cliente);
+
 }

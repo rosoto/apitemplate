@@ -1,8 +1,9 @@
-using Arquetipo.Api.Models.Header;
+﻿using Arquetipo.Api.Models.Header; //
+using System.Collections.Generic; // Necesario para List<T>
 
-namespace Arquetipo.Api.Models.Response;
+namespace Arquetipo.Api.Models.Response; //
 
-public class DataCliente : HeaderBase
+public class DataCliente : HeaderBase //
 {
-    public List<Cliente> Data { get; set; }
+    public required List<Cliente> Data { get; set; } //
 }

@@ -15,18 +15,13 @@ namespace Arquetipo.Api.Configuration;
 /// Permite que la versionado de API defina un documento Swagger por cada versión de API
 /// después de que el servicio IApiVersionDescriptionProvider haya sido resuelto del contenedor de servicios.
 /// </remarks>
-public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
+/// <remarks>
+/// Inicializa una nueva instancia de la clase <see cref="ConfigureSwaggerOptions"/>.
+/// </remarks>
+/// <param name="provider">El <see cref="IApiVersionDescriptionProvider"/> utilizado para generar los documentos Swagger.</param>
+public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : IConfigureOptions<SwaggerGenOptions>
 {
-    private readonly IApiVersionDescriptionProvider _provider; 
-
-    /// <summary>
-    /// Inicializa una nueva instancia de la clase <see cref="ConfigureSwaggerOptions"/>.
-    /// </summary>
-    /// <param name="provider">El <see cref="IApiVersionDescriptionProvider"/> utilizado para generar los documentos Swagger.</param>
-    public ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider)
-    {
-        _provider = provider;
-    }
+    private readonly IApiVersionDescriptionProvider _provider = provider;
 
     /// <summary>
     /// Configura la instancia de <see cref="SwaggerGenOptions"/>.

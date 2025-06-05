@@ -5,21 +5,12 @@ using System.Text;
 
 namespace Arquetipo.Api.Services
 { 
-    public class OperacionesApiClient : IApiOperacionesClient
+    public class OperacionesApiClient(HttpClient httpClient, ILogger<OperacionesApiClient> logger, IConfiguration configuration) : IApiOperacionesClient
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<OperacionesApiClient> _logger;
-        private readonly string _usuario;
-        private readonly string _password;
-            
-
-        public OperacionesApiClient(HttpClient httpClient, ILogger<OperacionesApiClient> logger, IConfiguration configuration)
-        {
-            _httpClient = httpClient;
-            _logger = logger;
-            _usuario = configuration["ApiOperaciones:Usuario"];
-            _password = configuration["ApiOperaciones:Password"];
-        }
+        private readonly HttpClient _httpClient = httpClient;
+        private readonly ILogger<OperacionesApiClient> _logger = logger;
+        private readonly string _usuario = configuration["ApiOperaciones:Usuario"];
+        private readonly string _password = configuration["ApiOperaciones:Password"];
 
         private void AddAuthorizationHeader(HttpRequestMessage request)
         {
@@ -47,7 +38,7 @@ namespace Arquetipo.Api.Services
             if (response.IsSuccessStatusCode)
             {
                 var apiResponse = await response.Content.ReadFromJsonAsync<OperacionesApiResponse<TasaDeCambioItem>>();
-                if (apiResponse == null || apiResponse.Data == null || !apiResponse.Data.Any())
+                if (apiResponse == null || apiResponse.Data == null || apiResponse.Data.Count == 0)
                 {
                     _logger.LogWarning("GetTasaDeCambio devolvió una respuesta exitosa pero sin datos o con formato inesperado.");
                     return new OperacionesApiResponse<TasaDeCambioItem>
@@ -55,7 +46,7 @@ namespace Arquetipo.Api.Services
                         Status = apiResponse?.Status ?? "204",
                         Comentario = apiResponse?.Comentario ?? "Respuesta sin datos.",
                         SessionId = apiResponse?.SessionId ?? string.Empty,
-                        Data = [] // Simplificación de inicialización de colección
+                        Data = []
                     };
                 }
                 return apiResponse;
@@ -70,9 +61,8 @@ namespace Arquetipo.Api.Services
 
         public async Task<OperacionesApiResponse<FeriadoLegalItem>> GetFeriadosLegalesAsync(DateTime fechaInicio, DateTime fechaFin)
         {
-            string requestUri = "service/generales/getferiadoslegales/"; // Ruta relativa a BaseAddress
+            string requestUri = "service/generales/getferiadoslegales/";
             _logger.LogInformation("Llamando a Operaciones API - GetFeriadosLegales en {RequestUri}", requestUri);
-
 
             var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -98,7 +88,7 @@ namespace Arquetipo.Api.Services
                         Status = apiResponse?.Status ?? "204",
                         Comentario = apiResponse?.Comentario ?? "Respuesta sin datos.",
                         SessionId = apiResponse?.SessionId ?? string.Empty,
-                        Data = [] // Simplificación de inicialización de colección
+                        Data = []
                     };
                 }
                 return apiResponse;

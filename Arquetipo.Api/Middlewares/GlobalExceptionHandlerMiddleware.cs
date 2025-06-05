@@ -1,10 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Arquetipo.Api.Middlewares;
 
@@ -40,17 +35,17 @@ public class GlobalExceptionHandlerMiddleware
             {
                 response = new
                 {
-                    StatusCode = context.Response.StatusCode,
-                    Message = ex.Message, // Mensaje detallado en desarrollo
-                    InnerException = ex.InnerException?.Message, // Uso de operador de acceso condicional para evitar la desreferencia de una referencia NULL
-                    StackTrace = ex.StackTrace?.ToString() // Uso de operador de acceso condicional para evitar la desreferencia de una referencia NULL
+                    context.Response.StatusCode,
+                    ex.Message,
+                    InnerException = ex.InnerException?.Message,
+                    StackTrace = ex.StackTrace?.ToString()
                 };
             }
             else
             {
                 response = new
                 {
-                    StatusCode = context.Response.StatusCode,
+                    context.Response.StatusCode,
                     Message = "Ocurrió un error interno en el servidor."
                 };
             }

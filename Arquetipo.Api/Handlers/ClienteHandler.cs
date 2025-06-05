@@ -13,13 +13,12 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
     private readonly IClienteRepository _clienteRepository = clienteRepository;
     private readonly ILogger<ClienteHandler> _logger = logger;
 
-    // --- V1 Implementations ---
+    //V1
     public async Task<DataClienteResponse> GetClientesV1Async(int page, int pageSize)
     {
-        // Línea 16 antes (aproximadamente)
-        var result = new DataClienteResponse { Data = new List<ClienteResponse>() };
+        var result = new DataClienteResponse { Data = [] };
         var repoClientes = await _clienteRepository.GetAllAsync(page, pageSize);
-        if (repoClientes != null && repoClientes.Any())
+        if (repoClientes != null && repoClientes.Count != 0)
         {
             result.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV1).Where(c => c != null));
         }
@@ -28,8 +27,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
     public async Task<DataClienteResponse> GetClienteByIdV1Async(int? id)
     {
-        // Línea 23 antes (aproximadamente)
-        var result = new DataClienteResponse { Data = new List<ClienteResponse>() };
+        var result = new DataClienteResponse { Data = [] };
         var repoCliente = await _clienteRepository.GetByIdAsync(id);
         if (repoCliente is not null)
         {
@@ -43,7 +41,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
     {
         _logger.LogInformation("Handler V1: Buscando clientes con query: {@QueryV1}", queryV1);
 
-        var response = new DataClienteResponse { Data = new List<ClienteResponse>() };
+        var response = new DataClienteResponse { Data = [] };
 
         if (queryV1 == null)
         {
@@ -63,7 +61,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
         var repoClientes = await _clienteRepository.GetByAnyAsync(setClienteAnyParaRepo);
 
-        if (repoClientes != null && repoClientes.Any())
+        if (repoClientes != null && repoClientes.Count != 0)
         {
             response.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV1).Where(c => c != null));
             _logger.LogInformation("Handler V1: Se encontraron {Count} clientes para la consulta.", response.Data.Count);
@@ -77,15 +75,14 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
     public async Task PostClientesV1Async(List<CrearClienteRequestV1> clientes)
     {
-        // Línea 63 que mencionaste. Usar Mapper.
         var repoClientes = clientes.Select(ClienteMapper.ToSetCliente).Where(c => c != null).ToList();
-        if (repoClientes.Any())
+        if (repoClientes.Count != 0)
         {
             await _clienteRepository.AddClientesAsync(repoClientes);
         }
     }
 
-    public async Task<bool> UpdateClienteV1Async(ActualizarClienteRequest cliente) // Corregido el tipo
+    public async Task<bool> UpdateClienteV1Async(ActualizarClienteRequest cliente)
     {
         if (cliente?.Id == null || !await _clienteRepository.ExistsAsync(cliente.Id))
         {
@@ -93,7 +90,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
             return false;
         }
 
-        var repoUpdateDto = ClienteMapper.ToSetClienteId(cliente); // Usar Mapper
+        var repoUpdateDto = ClienteMapper.ToSetClienteId(cliente);
         if (repoUpdateDto == null)
         {
             _logger.LogError("Handler V1: Falla al mapear ActualizarClienteRequestV1 a SetClienteId para ID: {Id}", cliente.Id);
@@ -110,18 +107,14 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
         return true;
     }
 
-    // --- V2 Implementations ---
+    //V2
     public async Task<DataClienteResponseV2> GetClientesV2Async(int page, int pageSize, bool? soloActivos)
     {
         _logger.LogInformation("Handler: GetClientesV2Async - soloActivos: {SoloActivos}", soloActivos);
-        var result = new DataClienteResponseV2 { Data = new List<ClienteResponseV2>() };
+        var result = new DataClienteResponseV2 { Data = [] };
         var repoClientes = await _clienteRepository.GetAllAsync(page, pageSize);
 
-        // if(soloActivos.HasValue && soloActivos.Value) {
-        //     repoClientes = repoClientes.Where(c => c.EstaActivo).ToList();
-        // }
-
-        if (repoClientes != null && repoClientes.Any())
+        if (repoClientes != null && repoClientes.Count != 0)
         {
             result.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV2).Where(c => c != null));
         }
@@ -130,7 +123,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
     public async Task<DataClienteResponseV2> GetClienteByIdV2Async(int? id)
     {
-        var result = new DataClienteResponseV2 { Data = new List<ClienteResponseV2>() };
+        var result = new DataClienteResponseV2 { Data = [] };
         var repoCliente = await _clienteRepository.GetByIdAsync(id);
         if (repoCliente is not null)
         {
@@ -140,10 +133,10 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
         return result;
     }
 
-    public async Task<DataClienteResponseV2> GetClientesByAnyV2Async(BuscarClienteRequestV2 query) // Corregido tipo y nombre de parámetro
+    public async Task<DataClienteResponseV2> GetClientesByAnyV2Async(BuscarClienteRequestV2 query)
     {
         _logger.LogInformation("Handler V2: Buscando clientes con query: {@QueryV2}", query);
-        var result = new DataClienteResponseV2 { Data = new List<ClienteResponseV2>() };
+        var result = new DataClienteResponseV2 { Data = [] };
 
         if (query == null)
         {
@@ -164,7 +157,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
         var repoClientes = await _clienteRepository.GetByAnyAsync(setClienteAnyParaRepo);
 
-        if (repoClientes != null && repoClientes.Any())
+        if (repoClientes != null && repoClientes.Count != 0)
         {
             result.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV2).Where(c => c != null));
             _logger.LogInformation("Handler V2: Se encontraron {Count} clientes para la consulta.", result.Data.Count);
@@ -178,22 +171,17 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
     public async Task PostClientesV2Async(List<CrearClienteRequestV2> clientes)
     {
-        // Línea 144 que mencionaste. Usar Mapper.
         var repoSetClienteList = new List<SetCliente>();
         foreach (var reqV2 in clientes)
         {
-            var setCliente = ClienteMapper.ToSetCliente(reqV2); // Mapea CrearClienteRequestV2 a SetCliente
+            var setCliente = ClienteMapper.ToSetCliente(reqV2);
             if (setCliente != null)
             {
-                // Lógica adicional si SetCliente necesita ser adaptado para campos de V2
-                // que no existen directamente en SetCliente (ej. PreferenciaContacto)
-                // Esto podría implicar que SetCliente necesite esos campos, o que la entidad
-                // del repositorio los tenga y se actualicen de otra forma.
                 repoSetClienteList.Add(setCliente);
             }
         }
 
-        if (repoSetClienteList.Any())
+        if (repoSetClienteList.Count != 0)
         {
             _logger.LogInformation("Handler V2: Creando {Count} clientes.", repoSetClienteList.Count);
             await _clienteRepository.AddClientesAsync(repoSetClienteList);
@@ -221,7 +209,6 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
         ClienteMapper.ApplyUpdate(entidadCliente, clienteUpdateReq);
 
-        // Mapear la entidadCliente actualizada al SetClienteId que espera el repositorio
         var repoUpdateDto = new SetClienteId
         {
             Id = entidadCliente.Id,
@@ -230,8 +217,6 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
             Email = entidadCliente.Email,
             Telefono = entidadCliente.Telefono
         };
-        // Este mapeo también podría estar en ClienteMapper si se vuelve complejo:
-        // var repoUpdateDto = ClienteMapper.ToSetClienteId(entidadCliente);
 
         await _clienteRepository.UpdateAsync(repoUpdateDto);
         return true;

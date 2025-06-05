@@ -33,6 +33,7 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 builder.Services.AddTransient<ForwardRequestIdDelegatingHandler>();
 builder.Services.AddTransient<ITokenService, TokenService>();
 
@@ -65,7 +66,6 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Configuración de Autenticación JWT
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -73,15 +73,15 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    var jwtSettings = builder.Configuration.GetSection("Jwt"); //
+    var jwtSettings = builder.Configuration.GetSection("Jwt");
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!)), //
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!)),
         ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"], //
-        ValidateAudience = true, // Considera si necesitas esto y configúralo en appsettings
-        ValidAudience = jwtSettings["Issuer"], // A menudo el mismo que el Issuer, o una audiencia específica
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Issuer"],
         ValidateLifetime = true
     };
 
@@ -112,7 +112,6 @@ builder.Services.AddAuthentication(options =>
             else
             {
                 logger.LogInformation("Token validado exitosamente contra la base de datos para el usuario: {UserIdentifier}", nombreUsuario);
-                // Opcional: Refrescar claims si es necesario.
             }
         }
     };
@@ -121,12 +120,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
-
 var app = builder.Build();
 
 app.UseRequestId(); // Middleware para generar y propagar X-Request-ID
-app.UseCustomSecurityHeaders(); // Middleware personalizado para cabeceras de seguridad
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); // Middleware para manejo de excepciones globales
 
 app.UseSwagger();

@@ -10,21 +10,14 @@ namespace Arquetipo.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [AllowAnonymous]
-    public class AuthController : ControllerBase
+    public class AuthController(
+        IUsuarioRepository usuarioRepository,
+        ITokenService tokenService,
+        ILogger<AuthController> logger) : ControllerBase
     {
-        private readonly IUsuarioRepository _usuarioRepository;
-        private readonly ITokenService _tokenService;
-        private readonly ILogger<AuthController> _logger;
-
-        public AuthController(
-            IUsuarioRepository usuarioRepository,
-            ITokenService tokenService,
-            ILogger<AuthController> logger)
-        {
-            _usuarioRepository = usuarioRepository;
-            _tokenService = tokenService;
-            _logger = logger;
-        }
+        private readonly IUsuarioRepository _usuarioRepository = usuarioRepository;
+        private readonly ITokenService _tokenService = tokenService;
+        private readonly ILogger<AuthController> _logger = logger;
 
         [HttpPost("login")]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
@@ -46,21 +39,13 @@ namespace Arquetipo.Api.Controllers
                 return Unauthorized(new ProblemDetails { Title = "Error de autenticación", Detail = "Usuario o contraseña incorrectos.", Status = StatusCodes.Status401Unauthorized });
             }
 
-            // Verificar contraseña
-            //if (!BCrypt.Net.BCrypt.Verify(loginRequest.Password, usuario.PasswordHash))
-            //{
-            //    _logger.LogWarning("Login fallido: Contraseña incorrecta para el usuario {NombreUsuario}.", loginRequest.NombreUsuario);
-            //    return Unauthorized(new ProblemDetails { Title = "Error de autenticación", Detail = "Usuario o contraseña incorrectos.", Status = StatusCodes.Status401Unauthorized });
-            //}
-
             var tokenString = _tokenService.GenerarToken(usuario);
             _logger.LogInformation("Login exitoso y token generado para el usuario: {NombreUsuario}", loginRequest.NombreUsuario);
 
             return Ok(new LoginResponse
             {
                 Token = tokenString,
-                // La expiración real está dentro del token, aquí podrías devolver cuándo caduca
-                Expiration = DateTime.UtcNow.AddHours(1), // Coincide con la duración del token en TokenService
+                Expiration = DateTime.UtcNow.AddHours(1),
                 NombreUsuario = usuario.NombreUsuario
             });
         }
@@ -83,17 +68,17 @@ namespace Arquetipo.Api.Controllers
                 {
                     NombreUsuario = registerRequest.NombreUsuario,
                     PasswordHash = registerRequest.Password,
-                    Roles = registerRequest.Roles, // Asigna roles si se proporcionan
-                    EstaActivo = true // Por defecto, los nuevos usuarios están activos
+                    Roles = registerRequest.Roles,
+                    EstaActivo = true
                 };
 
                 var usuarioCreado = await _usuarioRepository.AddUsuarioAsync(nuevoUsuario, registerRequest.Password);
 
-                // Opcional: podrías devolver el usuario creado o una URL al recurso
-                return CreatedAtAction(nameof(Login), new { /* parámetros para GetById si tuvieras un endpoint así */ },
+
+                return CreatedAtAction(nameof(Login), new { },
                                        new { Message = "Usuario registrado exitosamente.", UsuarioId = usuarioCreado.Id });
             }
-            catch (InvalidOperationException ex) // Captura si el usuario ya existe (lanzado por AddUsuarioAsync)
+            catch (InvalidOperationException ex)
             {
                 _logger.LogWarning(ex, "Registro fallido: El nombre de usuario {NombreUsuario} ya existe.", registerRequest.NombreUsuario);
                 return Conflict(new ProblemDetails { Title = "Conflicto", Detail = ex.Message, Status = StatusCodes.Status409Conflict });

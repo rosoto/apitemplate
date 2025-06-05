@@ -12,19 +12,13 @@ namespace Arquetipo.Api.Controllers
     [ApiVersion("2")]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class UtilController : ControllerBase
+    public class UtilController(
+        IApiOperacionesClient operacionesApiClient,
+        ILogger<UtilController> logger) : ControllerBase
     {
-        private readonly IApiOperacionesClient _operacionesApiClient;
-        private readonly ILogger<UtilController> _logger;
+        private readonly IApiOperacionesClient _operacionesApiClient = operacionesApiClient;
+        private readonly ILogger<UtilController> _logger = logger;
         private const string DefaultMoneda = "UF";
-
-        public UtilController(
-            IApiOperacionesClient operacionesApiClient,
-            ILogger<UtilController> logger)
-        {
-            _operacionesApiClient = operacionesApiClient;
-            _logger = logger;
-        }
 
         /// <summary>
         /// Obtiene la tasa de cambio desde el servicio externo de Operaciones.
@@ -36,6 +30,7 @@ namespace Arquetipo.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpGet("tasadecambio")]
         public async Task<IActionResult> GetTasaDeCambio(
             [FromQuery] string fecha,
             [FromQuery] string moneda = DefaultMoneda)
@@ -55,9 +50,8 @@ namespace Arquetipo.Api.Controllers
                 _logger.LogInformation("Solicitando tasa de cambio para fecha {FechaConsulta} y moneda {CodigoMoneda}", fechaConsulta, moneda);
                 var resultado = await _operacionesApiClient.GetTasaDeCambioAsync(fechaConsulta, moneda);
 
-                if (resultado?.Data == null || !resultado.Data.Any())
+                if (resultado?.Data == null || resultado.Data.Count == 0)
                 {
-                    // Si el servicio externo devuelve 200 pero la data está vacía, podría ser un "no encontrado" lógico.
                     _logger.LogWarning("Servicio de tasa de cambio devolvió status {Status} pero sin datos en el array 'data'. Comentario: {Comentario}", resultado?.Status, resultado?.Comentario);
                     return NotFound(new { Message = resultado?.Comentario ?? "No se encontró la tasa de cambio para los parámetros especificados." });
                 }
@@ -68,7 +62,6 @@ namespace Arquetipo.Api.Controllers
             catch (HttpRequestException httpEx)
             {
                 _logger.LogError(httpEx, "HttpRequestException al obtener tasa de cambio. StatusCode: {StatusCode}", httpEx.StatusCode);
-                // Devuelve el mismo código de estado que la API externa si es un error conocido, o un 500 genérico
                 return StatusCode((int?)httpEx.StatusCode ?? StatusCodes.Status500InternalServerError, new { Message = $"Error al comunicarse con el servicio de tasas: {httpEx.Message}" });
             }
             catch (Exception ex)
@@ -88,6 +81,7 @@ namespace Arquetipo.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [HttpGet("feriadoslegales")]
         public async Task<IActionResult> GetFeriadosLegales(
             [FromQuery] string fechaInicioStr,
             [FromQuery] string fechaFinStr)

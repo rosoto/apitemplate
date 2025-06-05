@@ -3,13 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Arquetipo.Api.Infrastructure.Persistence
 {
-    public class ArquetipoDbContext : DbContext
+    public class ArquetipoDbContext(DbContextOptions<ArquetipoDbContext> options) : DbContext(options)
     {
-        public ArquetipoDbContext(DbContextOptions<ArquetipoDbContext> options) : base(options)
-        {
-        }
-
-        public DbSet<Cliente> Clientes { get; set; } // Usando tu clase Cliente existente como entidad
-        public DbSet<Usuario> Usuarios { get; set; } // Asegúrate de tener una clase Usuario definida
+        public DbSet<Cliente> Clientes { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
     }
 }

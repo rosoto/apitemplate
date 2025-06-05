@@ -3,16 +3,10 @@ using Arquetipo.Api.Infrastructure;
 using Arquetipo.Api.Models.Response;
 using Microsoft.EntityFrameworkCore;
 
-public class UsuarioRepository : IUsuarioRepository
+public class UsuarioRepository(ArquetipoDbContext context, ILogger<UsuarioRepository> logger) : IUsuarioRepository
 {
-    private readonly ArquetipoDbContext _context;
-    private readonly ILogger<UsuarioRepository> _logger;
-
-    public UsuarioRepository(ArquetipoDbContext context, ILogger<UsuarioRepository> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    private readonly ArquetipoDbContext _context = context;
+    private readonly ILogger<UsuarioRepository> _logger = logger;
 
     public async Task<Usuario> GetUsuarioPorNombreAsync(string nombreUsuario)
     {
@@ -26,15 +20,12 @@ public class UsuarioRepository : IUsuarioRepository
         if (await _context.Usuarios.AnyAsync(u => u.NombreUsuario == usuario.NombreUsuario))
         {
             _logger.LogWarning("Intento de registrar usuario con nombre de usuario ya existente: {NombreUsuario}", usuario.NombreUsuario);
-            // Podrías lanzar una excepción o devolver null para indicar el conflicto
             throw new InvalidOperationException("El nombre de usuario ya existe.");
         }
-
-        //usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(plainPassword);
 
         _context.Usuarios.Add(usuario);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Usuario {NombreUsuario} registrado exitosamente.", usuario.NombreUsuario);
         return usuario;
     }
-}   
+}

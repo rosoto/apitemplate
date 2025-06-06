@@ -1,23 +1,22 @@
-﻿using Arquetipo.Api.Handlers;
+﻿using Arquetipo.Api.Configuration;
+using Arquetipo.Api.Handlers;
+using Arquetipo.Api.HttpHandlers;
 using Arquetipo.Api.Infrastructure;
 using Arquetipo.Api.Infrastructure.Persistence;
-using Arquetipo.Api.Configuration;
 using Arquetipo.Api.Middlewares;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
-using System.Text;
-using Asp.Versioning;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using Scalar.AspNetCore;
-using Asp.Versioning.ApiExplorer;
-using Arquetipo.Api.HttpHandlers;
-using Arquetipo.Api.Services;
-using System.Net.Http.Headers;
 using Arquetipo.Api.Models.Response;
-using System.Security.Claims;
+using Arquetipo.Api.Services;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,18 +37,22 @@ builder.Services.AddTransient<ForwardRequestIdDelegatingHandler>();
 builder.Services.AddTransient<ITokenService, TokenService>();
 
 string? operacionesApiHost = builder.Configuration["ApiOperaciones:Url"];
+if (string.IsNullOrEmpty(operacionesApiHost))
+{
+    throw new InvalidOperationException("La configuración 'ApiOperaciones:Url' no puede ser nula o vacía.");
+}
+
 builder.Services.AddHttpClient<IApiOperacionesClient, OperacionesApiClient>(client =>
 {
-    // Configura la BaseAddress completa aquí
     client.BaseAddress = new Uri(operacionesApiHost);
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 })
-.AddHttpMessageHandler<ForwardRequestIdDelegatingHandler>(); // Añade tu handler para propagar X-Request-ID
+.AddHttpMessageHandler<ForwardRequestIdDelegatingHandler>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirApiRequest", policy =>
-        policy.WithOrigins("*") 
+        policy.WithOrigins("*")
               .WithMethods("GET", "POST", "PUT", "DELETE")
               .AllowAnyHeader());
 });

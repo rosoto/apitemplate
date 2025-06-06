@@ -41,9 +41,9 @@
                     // Política más restrictiva para PRODUCCIÓN (ajusta según las necesidades de Scalar si es necesario)
                     context.Response.Headers.Append("Content-Security-Policy",
                         "default-src 'self'; " +
-                        "script-src 'self' https://cdn.jsdelivr.net; " + 
+                        "script-src 'self' https://cdn.jsdelivr.net; " +
                         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-                        "connect-src 'self'; " + 
+                        "connect-src 'self'; " +
                         "worker-src 'self' blob:; " +
                         "img-src 'self' data: https://cdn.jsdelivr.net; " +
                         "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +

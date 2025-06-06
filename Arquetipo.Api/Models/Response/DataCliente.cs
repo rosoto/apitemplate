@@ -1,5 +1,4 @@
 ﻿using Arquetipo.Api.Models.Header; //
-using System.Collections.Generic; // Necesario para List<T>
 
 namespace Arquetipo.Api.Models.Response; //
 

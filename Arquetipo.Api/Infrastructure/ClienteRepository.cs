@@ -19,7 +19,7 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
         if (pageSize < 1) pageSize = 10;
 
         return await _context.Clientes
-            .OrderBy(c => c.Id) 
+            .OrderBy(c => c.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -142,7 +142,7 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
         _logger.LogInformation("Cliente con ID {Id} eliminado a través de EF Core.", id);
     }
 
-    public async Task UpdateAsync(SetClienteId clienteDto)
+    public async Task UpdateAsync(SetCliente clienteDto)
     {
         if (clienteDto?.Id == null)
         {

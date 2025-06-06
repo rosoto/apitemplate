@@ -1,5 +1,5 @@
-﻿using Arquetipo.Api.Infrastructure.Persistence;
-using Arquetipo.Api.Infrastructure;
+﻿using Arquetipo.Api.Infrastructure;
+using Arquetipo.Api.Infrastructure.Persistence;
 using Arquetipo.Api.Models.Response;
 using Microsoft.EntityFrameworkCore;
 

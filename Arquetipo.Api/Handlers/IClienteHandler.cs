@@ -2,10 +2,8 @@
 using Arquetipo.Api.Models.Request.v2;
 using Arquetipo.Api.Models.Response.v1;
 using Arquetipo.Api.Models.Response.v2;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Arquetipo.Api.Handlers; 
+namespace Arquetipo.Api.Handlers;
 
 public interface IClienteHandler
 {

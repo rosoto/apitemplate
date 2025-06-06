@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 
 namespace Arquetipo.Api.Services
-{ 
+{
     public class OperacionesApiClient(HttpClient httpClient, ILogger<OperacionesApiClient> logger, IConfiguration configuration) : IApiOperacionesClient
     {
         private readonly HttpClient _httpClient = httpClient;

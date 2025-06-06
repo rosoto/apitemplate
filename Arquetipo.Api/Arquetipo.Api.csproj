@@ -4,8 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-	  <ImplicitUsings>enable</ImplicitUsings>
+	<ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<PreserveCompilationContext>true</PreserveCompilationContext>
     <NoWarn>$(NoWarn);1591</NoWarn>	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	  
   </PropertyGroup>

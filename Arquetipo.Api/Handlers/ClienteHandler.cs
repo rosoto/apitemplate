@@ -1,10 +1,10 @@
-﻿using Arquetipo.Api.Infrastructure;
-using Arquetipo.Api.Models.Request; 
-using Arquetipo.Api.Handlers.Mapper;
-using Arquetipo.Api.Models.Request.v2;
-using Arquetipo.Api.Models.Response.v2;
-using Arquetipo.Api.Models.Response.v1;
+﻿using Arquetipo.Api.Handlers.Mapper;
+using Arquetipo.Api.Infrastructure;
+using Arquetipo.Api.Models.Request;
 using Arquetipo.Api.Models.Request.v1;
+using Arquetipo.Api.Models.Request.v2;
+using Arquetipo.Api.Models.Response.v1;
+using Arquetipo.Api.Models.Response.v2;
 
 namespace Arquetipo.Api.Handlers;
 
@@ -90,7 +90,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
             return false;
         }
 
-        var repoUpdateDto = ClienteMapper.ToSetClienteId(cliente);
+        var repoUpdateDto = ClienteMapper.ToSetCliente(cliente);
         if (repoUpdateDto == null)
         {
             _logger.LogError("Handler V1: Falla al mapear ActualizarClienteRequestV1 a SetClienteId para ID: {Id}", cliente.Id);
@@ -209,7 +209,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
         ClienteMapper.ApplyUpdate(entidadCliente, clienteUpdateReq);
 
-        var repoUpdateDto = new SetClienteId
+        var repoUpdateDto = new SetCliente
         {
             Id = entidadCliente.Id,
             Nombre = entidadCliente.Nombre,

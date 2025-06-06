@@ -59,7 +59,7 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider) : 
         foreach (var description in _provider.ApiVersionDescriptions)
             options.SwaggerDoc(description.GroupName, CreateVersionInfo(description));
 
-        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"; 
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
         if (File.Exists(xmlPath))
             options.IncludeXmlComments(xmlPath);

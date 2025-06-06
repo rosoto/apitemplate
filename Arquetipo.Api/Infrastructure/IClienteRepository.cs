@@ -10,7 +10,7 @@ namespace Arquetipo.Api.Infrastructure
         Task<List<Cliente>> GetByAnyAsync(SetClienteAny clienteParams);
         Task<bool> ExistsAsync(int? id);
         Task AddClientesAsync(List<SetCliente> clientes);
-        Task UpdateAsync(SetClienteId cliente);
+        Task UpdateAsync(SetCliente cliente);
         Task DeleteAsync(int? id);
     }
 }

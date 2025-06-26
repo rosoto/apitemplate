@@ -9,8 +9,8 @@ namespace Arquetipo.Api.Services
     {
         private readonly HttpClient _httpClient = httpClient;
         private readonly ILogger<OperacionesApiClient> _logger = logger;
-        private readonly string _usuario = configuration["ApiOperaciones:Usuario"];
-        private readonly string _password = configuration["ApiOperaciones:Password"];
+        private readonly string _usuario = configuration["ApiOperaciones:Usuario"] ?? throw new ArgumentNullException(nameof(_usuario), "El usuario no está configurado.");
+        private readonly string _password = configuration["ApiOperaciones:Password"] ?? throw new ArgumentNullException(nameof(_password), "La contraseña no está configurada.");
 
         private void AddAuthorizationHeader(HttpRequestMessage request)
         {

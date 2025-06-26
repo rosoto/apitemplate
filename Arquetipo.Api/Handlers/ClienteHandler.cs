@@ -1,26 +1,31 @@
-﻿using Arquetipo.Api.Handlers.Mapper;
-using Arquetipo.Api.Infrastructure;
+﻿using Arquetipo.Api.Infrastructure;
 using Arquetipo.Api.Models.Request;
 using Arquetipo.Api.Models.Request.v1;
 using Arquetipo.Api.Models.Request.v2;
 using Arquetipo.Api.Models.Response.v1;
 using Arquetipo.Api.Models.Response.v2;
+using AutoMapper;
 
 namespace Arquetipo.Api.Handlers;
 
-public class ClienteHandler(IClienteRepository clienteRepository, ILogger<ClienteHandler> logger) : IClienteHandler
+/// <summary>
+/// Manejador para las operaciones de negocio relacionadas con los Clientes.
+/// Orquesta las llamadas al repositorio y mapea los resultados a los DTOs de respuesta.
+/// </summary>
+public class ClienteHandler(IClienteRepository clienteRepository, ILogger<ClienteHandler> logger, IMapper mapper) : IClienteHandler
 {
     private readonly IClienteRepository _clienteRepository = clienteRepository;
     private readonly ILogger<ClienteHandler> _logger = logger;
+    private readonly IMapper _mapper = mapper;
 
-    //V1
+    #region V1
     public async Task<DataClienteResponse> GetClientesV1Async(int page, int pageSize)
     {
         var result = new DataClienteResponse { Data = [] };
         var repoClientes = await _clienteRepository.GetAllAsync(page, pageSize);
         if (repoClientes != null && repoClientes.Count != 0)
         {
-            result.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV1).Where(c => c != null));
+            result.Data = _mapper.Map<List<ClienteResponse>>(repoClientes);
         }
         return result;
     }
@@ -31,39 +36,22 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
         var repoCliente = await _clienteRepository.GetByIdAsync(id);
         if (repoCliente is not null)
         {
-            var clienteDto = ClienteMapper.ToClienteResponseV1(repoCliente);
-            if (clienteDto != null) result.Data.Add(clienteDto);
+            result.Data.Add(_mapper.Map<ClienteResponse>(repoCliente));
         }
         return result;
     }
 
-    public async Task<DataClienteResponse> GetClientesByAnyV1Async(BuscarClienteRequest queryV1) // Corregido el tipo
+    public async Task<DataClienteResponse> GetClientesByAnyV1Async(BuscarClienteRequest queryV1)
     {
         _logger.LogInformation("Handler V1: Buscando clientes con query: {@QueryV1}", queryV1);
-
         var response = new DataClienteResponse { Data = [] };
 
-        if (queryV1 == null)
-        {
-            _logger.LogWarning("Handler V1: El objeto de consulta (BuscarClienteQueryV1) es nulo.");
-            response.Status = 400;
-            return response;
-        }
-
-        var setClienteAnyParaRepo = ClienteMapper.ToSetClienteAny(queryV1); // Usar Mapper
-
-        if (setClienteAnyParaRepo == null)
-        {
-            _logger.LogWarning("Handler V1: No se pudo mapear BuscarClienteQueryV1 a SetClienteAny. Query: {@QueryV1}", queryV1);
-            response.Status = 400;
-            return response;
-        }
-
+        var setClienteAnyParaRepo = _mapper.Map<SetClienteAny>(queryV1);
         var repoClientes = await _clienteRepository.GetByAnyAsync(setClienteAnyParaRepo);
 
         if (repoClientes != null && repoClientes.Count != 0)
         {
-            response.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV1).Where(c => c != null));
+            response.Data = _mapper.Map<List<ClienteResponse>>(repoClientes);
             _logger.LogInformation("Handler V1: Se encontraron {Count} clientes para la consulta.", response.Data.Count);
         }
         else
@@ -75,7 +63,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
     public async Task PostClientesV1Async(List<CrearClienteRequestV1> clientes)
     {
-        var repoClientes = clientes.Select(ClienteMapper.ToSetCliente).Where(c => c != null).ToList();
+        var repoClientes = _mapper.Map<List<SetCliente>>(clientes);
         if (repoClientes.Count != 0)
         {
             await _clienteRepository.AddClientesAsync(repoClientes);
@@ -90,24 +78,24 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
             return false;
         }
 
-        var repoUpdateDto = ClienteMapper.ToSetCliente(cliente);
-        if (repoUpdateDto == null)
-        {
-            _logger.LogError("Handler V1: Falla al mapear ActualizarClienteRequestV1 a SetClienteId para ID: {Id}", cliente.Id);
-            return false;
-        }
+        var repoUpdateDto = _mapper.Map<SetCliente>(cliente);
         await _clienteRepository.UpdateAsync(repoUpdateDto);
         return true;
     }
 
     public async Task<bool> DeleteClienteV1Async(int? idCliente)
     {
-        if (!await _clienteRepository.ExistsAsync(idCliente)) return false;
+        if (idCliente == null || !await _clienteRepository.ExistsAsync(idCliente))
+        {
+            _logger.LogWarning("Handler V1: Intento de eliminar un cliente que no existe o con ID nulo: {ClienteId}", idCliente);
+            return false;
+        }
         await _clienteRepository.DeleteAsync(idCliente);
         return true;
     }
+    #endregion
 
-    //V2
+    #region V2
     public async Task<DataClienteResponseV2> GetClientesV2Async(int page, int pageSize, bool? soloActivos)
     {
         _logger.LogInformation("Handler: GetClientesV2Async - soloActivos: {SoloActivos}", soloActivos);
@@ -116,7 +104,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
         if (repoClientes != null && repoClientes.Count != 0)
         {
-            result.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV2).Where(c => c != null));
+            result.Data = _mapper.Map<List<ClienteResponseV2>>(repoClientes);
         }
         return result;
     }
@@ -127,8 +115,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
         var repoCliente = await _clienteRepository.GetByIdAsync(id);
         if (repoCliente is not null)
         {
-            var clienteDto = ClienteMapper.ToClienteResponseV2(repoCliente);
-            if (clienteDto != null) result.Data.Add(clienteDto);
+            result.Data.Add(_mapper.Map<ClienteResponseV2>(repoCliente));
         }
         return result;
     }
@@ -138,28 +125,12 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
         _logger.LogInformation("Handler V2: Buscando clientes con query: {@QueryV2}", query);
         var result = new DataClienteResponseV2 { Data = [] };
 
-        if (query == null)
-        {
-            _logger.LogWarning("Handler V2: El objeto de consulta (BuscarClienteQueryV2) es nulo.");
-            result.Status = 400;
-            return result;
-        }
-
-        // Usar Mapper
-        var setClienteAnyParaRepo = ClienteMapper.ToSetClienteAny(query);
-
-        if (setClienteAnyParaRepo == null)
-        {
-            _logger.LogWarning("Handler V2: No se pudo mapear BuscarClienteQueryV2 a SetClienteAny. Query: {@QueryV2}", query);
-            result.Status = 400;
-            return result;
-        }
-
+        var setClienteAnyParaRepo = _mapper.Map<SetClienteAny>(query);
         var repoClientes = await _clienteRepository.GetByAnyAsync(setClienteAnyParaRepo);
 
         if (repoClientes != null && repoClientes.Count != 0)
         {
-            result.Data.AddRange(repoClientes.Select(ClienteMapper.ToClienteResponseV2).Where(c => c != null));
+            result.Data = _mapper.Map<List<ClienteResponseV2>>(repoClientes);
             _logger.LogInformation("Handler V2: Se encontraron {Count} clientes para la consulta.", result.Data.Count);
         }
         else
@@ -171,15 +142,7 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
 
     public async Task PostClientesV2Async(List<CrearClienteRequestV2> clientes)
     {
-        var repoSetClienteList = new List<SetCliente>();
-        foreach (var reqV2 in clientes)
-        {
-            var setCliente = ClienteMapper.ToSetCliente(reqV2);
-            if (setCliente != null)
-            {
-                repoSetClienteList.Add(setCliente);
-            }
-        }
+        var repoSetClienteList = _mapper.Map<List<SetCliente>>(clientes);
 
         if (repoSetClienteList.Count != 0)
         {
@@ -207,18 +170,14 @@ public class ClienteHandler(IClienteRepository clienteRepository, ILogger<Client
             return false;
         }
 
-        ClienteMapper.ApplyUpdate(entidadCliente, clienteUpdateReq);
+        // AutoMapper aplica los cambios del request a la entidad existente
+        _mapper.Map(clienteUpdateReq, entidadCliente);
 
-        var repoUpdateDto = new SetCliente
-        {
-            Id = entidadCliente.Id,
-            Nombre = entidadCliente.Nombre,
-            Apellido = entidadCliente.Apellido,
-            Email = entidadCliente.Email,
-            Telefono = entidadCliente.Telefono
-        };
+        // Mapeamos la entidad ya actualizada al DTO que espera el repositorio
+        var repoUpdateDto = _mapper.Map<SetCliente>(entidadCliente);
 
         await _clienteRepository.UpdateAsync(repoUpdateDto);
         return true;
     }
+    #endregion
 }

@@ -1,6 +1,5 @@
 ﻿using Arquetipo.Api.Infrastructure.Persistence;
 using Arquetipo.Api.Models.Request;
-using Arquetipo.Api.Models.Request.v1;
 using Arquetipo.Api.Models.Response;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,25 +17,25 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
 
-        return await _context.Clientes
+        return await _context.Cliente
             .OrderBy(c => c.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
     }
 
-    public async Task<Cliente> GetByIdAsync(int? id)
+    public async Task<Cliente?> GetByIdAsync(int? id)
     {
         _logger.LogInformation("Obteniendo cliente por ID {Id} desde EF Core", id);
         if (id == null) return null;
-        return await _context.Clientes.FindAsync(id);
+        return await _context.Cliente.FindAsync(id);
     }
 
     public async Task<List<Cliente>> GetByAnyAsync(SetClienteAny clienteParams)
     {
         _logger.LogInformation("Buscando clientes desde EF Core con parámetros: {@ClienteParams}", clienteParams);
 
-        var query = _context.Clientes.AsQueryable();
+        var query = _context.Cliente.AsQueryable();
 
         if (clienteParams == null)
         {
@@ -67,7 +66,7 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
     public async Task<bool> ExistsAsync(int? id)
     {
         if (id == null) return false;
-        return await _context.Clientes.AnyAsync(c => c.Id == id);
+        return await _context.Cliente.AnyAsync(c => c.Id == id);
     }
 
     public async Task AddClientesAsync(List<SetCliente> clientesDto)
@@ -90,35 +89,9 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
             });
         }
 
-        await _context.Clientes.AddRangeAsync(clientesEntities);
+        await _context.Cliente.AddRangeAsync(clientesEntities);
         await _context.SaveChangesAsync();
         _logger.LogInformation("{Count} clientes agregados a través de EF Core.", clientesEntities.Count);
-    }
-
-    public async Task UpdateAsync(ActualizarClienteRequest clienteDto)
-    {
-        if (clienteDto?.Id == null)
-        {
-            _logger.LogWarning("Intento de actualizar un cliente con DTO nulo o ID nulo.");
-            return;
-        }
-
-        var clienteEntity = await _context.Clientes.FindAsync(clienteDto.Id);
-
-        if (clienteEntity == null)
-        {
-            _logger.LogWarning("No se encontró el cliente con ID {Id} para actualizar.", clienteDto.Id);
-            return;
-        }
-
-        clienteEntity.Nombre = clienteDto.Nombre;
-        clienteEntity.Apellido = clienteDto.Apellido;
-        clienteEntity.Email = clienteDto.Email;
-        clienteEntity.Telefono = clienteDto.Telefono;
-
-        _context.Clientes.Update(clienteEntity);
-        await _context.SaveChangesAsync();
-        _logger.LogInformation("Cliente con ID {Id} actualizado a través de EF Core.", clienteDto.Id);
     }
 
     public async Task DeleteAsync(int? id)
@@ -129,7 +102,7 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
             return;
         }
 
-        var clienteEntity = await _context.Clientes.FindAsync(id);
+        var clienteEntity = await _context.Cliente.FindAsync(id);
 
         if (clienteEntity == null)
         {
@@ -137,7 +110,7 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
             return;
         }
 
-        _context.Clientes.Remove(clienteEntity);
+        _context.Cliente.Remove(clienteEntity);
         await _context.SaveChangesAsync();
         _logger.LogInformation("Cliente con ID {Id} eliminado a través de EF Core.", id);
     }
@@ -150,19 +123,17 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
             return;
         }
 
-        var clienteEntity = await _context.Clientes.FindAsync(clienteDto.Id);
-
-        if (clienteEntity == null)
+        // Crea la entidad desde el DTO. No es necesario buscarla primero en la BD.
+        var clienteEntity = new Cliente
         {
-            _logger.LogWarning("No se encontró el cliente con ID {Id} para actualizar.", clienteDto.Id);
-            return;
-        }
+            Id = clienteDto.Id.Value,
+            Nombre = clienteDto.Nombre,
+            Apellido = clienteDto.Apellido,
+            Email = clienteDto.Email,
+            Telefono = clienteDto.Telefono
+        };
 
-        clienteEntity.Nombre = clienteDto.Nombre;
-        clienteEntity.Apellido = clienteDto.Apellido;
-        clienteEntity.Email = clienteDto.Email;
-        clienteEntity.Telefono = clienteDto.Telefono;
-
+        _context.Cliente.Attach(clienteEntity);
         _context.Entry(clienteEntity).State = EntityState.Modified;
 
         try
@@ -172,12 +143,7 @@ public class ClienteRepository(ArquetipoDbContext context, ILogger<ClienteReposi
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            _logger.LogError(ex, "Error de concurrencia al actualizar el cliente con ID {Id}. El cliente pudo haber sido modificado o eliminado por otro usuario.", clienteDto.Id);
-            throw;
-        }
-        catch (DbUpdateException ex)
-        {
-            _logger.LogError(ex, "Error al guardar los cambios en la base de datos para el cliente con ID {Id}.", clienteDto.Id);
+            _logger.LogError(ex, "Error de concurrencia al actualizar el cliente con ID {Id}.", clienteDto.Id);
             throw;
         }
     }

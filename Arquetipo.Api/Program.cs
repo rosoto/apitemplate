@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NLog.Web;
 using Scalar.AspNetCore;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,6 +22,8 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddDbContext<ArquetipoDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Database"))
@@ -35,6 +38,9 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 builder.Services.AddTransient<ForwardRequestIdDelegatingHandler>();
 builder.Services.AddTransient<ITokenService, TokenService>();
+
+builder.Logging.ClearProviders();
+builder.Host.UseNLog();
 
 string? operacionesApiHost = builder.Configuration["ApiOperaciones:Url"];
 if (string.IsNullOrEmpty(operacionesApiHost))
@@ -154,3 +160,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
